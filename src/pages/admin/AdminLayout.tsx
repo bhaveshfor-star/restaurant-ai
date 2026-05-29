@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Bot, LayoutDashboard, BookOpen, AlertTriangle, MessageSquare, Users, BarChart2, LogOut, Menu, X, Shield } from 'lucide-react';
+import { Bot, LayoutDashboard, BookOpen, AlertTriangle, MessageSquare, Users, BarChart2, LogOut, Menu, X, Shield, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 const navItems = [
@@ -38,6 +38,14 @@ export default function AdminLayout() {
   async function handleSignOut() {
     await signOut();
     navigate('/');
+  }
+
+  function handleGoBack() {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      navigate('/');
+    }
   }
 
   const SidebarContent = () => (
@@ -123,6 +131,13 @@ export default function AdminLayout() {
         </div>
 
         <main className="flex-1 p-6 lg:p-8 overflow-auto">
+          <button
+            onClick={handleGoBack}
+            className="flex items-center gap-2 mb-6 px-4 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium"
+          >
+            <ArrowLeft size={16} />
+            Back
+          </button>
           <Outlet />
         </main>
       </div>
