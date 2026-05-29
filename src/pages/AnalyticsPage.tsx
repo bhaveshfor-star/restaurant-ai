@@ -30,34 +30,51 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     if (user) fetchReports();
-  }, [user, period]);
+  }, [user, period]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function saveReport() {
     setSaving(true);
-    const { error } = await supabase.from('profit_reports').insert({
-      report_date: form.report_date,
-      total_sales: parseFloat(form.total_sales) || 0,
-      total_orders: parseInt(form.total_orders) || 0,
-      avg_order_value: parseFloat(form.avg_order_value) || 0,
-      gross_profit: parseFloat(form.gross_profit) || 0,
-      net_profit: parseFloat(form.net_profit) || 0,
-      online_orders: parseInt(form.online_orders) || 0,
-      dine_in_orders: parseInt(form.dine_in_orders) || 0,
-      takeaway_orders: parseInt(form.takeaway_orders) || 0,
-      top_items: [],
-      hourly_data: [],
-    });
-    if (!error) {
-      setShowForm(false);
-      setForm({
-        report_date: new Date().toISOString().split('T')[0],
-        total_sales: '', total_orders: '', avg_order_value: '',
-        gross_profit: '', net_profit: '',
-        online_orders: '', dine_in_orders: '', takeaway_orders: '',
-      });
-      fetchReports();
+    try {
+      const reportData = {
+        report_date: form.report_date,
+        total_sales: parseFloat(form.total_sales) || 0,
+        total_orders: parseInt(form.total_orders) || 0,
+        avg_order_value: parseFloat(form.avg_order_value) || 0,
+        gross_profit: parseFloat(form.gross_profit) || 0,
+        net_profit: parseFloat(form.net_profit) || 0,
+        online_orders: parseInt(form.online_orders) || 0,
+        dine_in_orders: parseInt(form.dine_in_orders) || 0,
+        takeaway_orders: parseInt(form.takeaway_orders) || 0,
+        top_items: [],
+        hourly_data: [],
+      };
+
+      console.log('Saving report:', reportData);
+
+      const { error } = await supabase.from('profit_reports').insert(reportData);
+
+      if (error) {
+        console.error('Error saving report:', error);
+        alert('Failed to save report: ' + error.message);
+      } else {
+        console.log('Report saved successfully');
+        setShowForm(false);
+        setForm({
+          report_date: new Date().toISOString().split('T')[0],
+          total_sales: '', total_orders: '', avg_order_value: '',
+          gross_profit: '', net_profit: '',
+          online_orders: '', dine_in_orders: '', takeaway_orders: '',
+        });
+        // Fetch updated reports to refresh dashboard
+        await fetchReports();
+        console.log('Dashboard refreshed');
+      }
+    } catch (err) {
+      console.error('Error saving report:', err);
+      alert('Failed to save report');
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }
 
   async function fetchReports() {
@@ -66,6 +83,7 @@ export default function AnalyticsPage() {
       let days = period === '7d' ? 7 : period === 'today' ? 1 : 30;
       const fromDate = new Date();
       fromDate.setDate(fromDate.getDate() - days);
+      console.log('Fetching reports from:', fromDate.toISOString().split('T')[0], 'for period:', period);
       const { data, error } = await supabase
         .from('profit_reports')
         .select('*')
@@ -75,6 +93,7 @@ export default function AnalyticsPage() {
         console.error('Fetch error:', error);
         setReports([]);
       } else {
+        console.log('Fetched reports:', data?.length, 'records');
         setReports((data as ProfitReport[]) || []);
       }
     } catch (err) {
